@@ -10,9 +10,5 @@ import { environment } from './environments/environment';
 registerLocaleData(localeAr, 'ar');
 registerLocaleData(localeEn, 'en');
 
-if (environment.production) {
-  enableProdMode();
-}
-
 platformBrowserDynamic().bootstrapModule(AppModule)
   .catch(err => console.error(err));
