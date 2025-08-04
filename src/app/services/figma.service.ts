@@ -13,6 +13,8 @@ export interface FigmaFile {
   version: string;
   schemaVersion: number;
   mainComponentKey: string;
+  id?: string;
+  key?: string;
 }
 
 export interface FigmaImageResponse {

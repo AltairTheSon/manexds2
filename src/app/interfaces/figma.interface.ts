@@ -10,6 +10,8 @@ export interface FigmaFile {
   mainComponentKey: string;
   componentPropertyReferences: { [key: string]: string };
   componentProperties: { [key: string]: any };
+  id?: string;
+  key?: string;
 }
 
 export interface FigmaDocument {
