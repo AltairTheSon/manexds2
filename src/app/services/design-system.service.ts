@@ -96,7 +96,7 @@ export class DesignSystemService {
     return {
       id: this.generateId(),
       name: figmaFile.name,
-      figmaFileId: figmaFile.key,
+      figmaFileId: figmaFile.id || figmaFile.key,
       figmaAccessToken: accessToken,
       lastSync: new Date(),
       components,
