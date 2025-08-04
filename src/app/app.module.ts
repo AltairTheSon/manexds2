@@ -18,6 +18,9 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSelectModule } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
 import { MatChipsModule } from '@angular/material/chips';
@@ -88,6 +91,9 @@ import { ComponentGeneratorService } from './services/component-generator.servic
     MatSnackBarModule,
     MatTabsModule,
     MatTableModule,
+    MatSlideToggleModule,
+    MatSelectModule,
+    FormsModule,
     MatPaginatorModule,
     MatSortModule,
     MatChipsModule,
