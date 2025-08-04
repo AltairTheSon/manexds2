@@ -44,19 +44,15 @@ import { DesignSystemService } from '../../services/design-system.service';
           <button mat-raised-button 
                   color="primary" 
                   type="button"
-                  [disabled]="isTesting || !connectionForm.valid"
                   (click)="testConnection()">
-            <mat-icon *ngIf="!isTesting">wifi_tethering</mat-icon>
-            <mat-spinner *ngIf="isTesting" diameter="20"></mat-spinner>
-            {{ isTesting ? 'Testing...' : 'Test Connection' }}
+            <mat-icon>wifi_tethering</mat-icon>
+            Test Connection
           </button>
           <button mat-raised-button 
                   color="accent" 
-                  type="submit"
-                  [disabled]="isExtracting || !connectionForm.valid">
-            <mat-icon *ngIf="!isExtracting">download</mat-icon>
-            <mat-spinner *ngIf="isExtracting" diameter="20"></mat-spinner>
-            {{ isExtracting ? 'Extracting...' : 'Extract Design System' }}
+                  type="submit">
+            <mat-icon>download</mat-icon>
+            Extract Design System
           </button>
         </div>
       </form>
@@ -284,9 +280,16 @@ export class FigmaConnectionComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    console.log('FigmaConnectionComponent initialized');
+  }
 
-  async testConnection() {
+  testConnection() {
+    console.log('Test Connection button clicked!');
+    
+    // Simple test to see if the button works
+    this.showSuccess('Test Connection button is working!');
+    
     if (!this.connectionForm.valid) {
       this.showError('Please fill in all required fields');
       return;
@@ -295,33 +298,42 @@ export class FigmaConnectionComponent implements OnInit {
     this.isTesting = true;
     this.connectionStatus = null;
 
-    try {
-      const accessToken = this.connectionForm.get('accessToken')?.value;
-      const response = await this.figmaService.testConnection(accessToken).toPromise();
-      
-      this.connectionStatus = {
-        type: 'success',
-        icon: 'check_circle',
-        title: 'Connection Successful',
-        message: `Connected to Figma as ${response.handle || 'User'}`
-      };
+    // Simulate API call for now
+    setTimeout(() => {
+      try {
+        const accessToken = this.connectionForm.get('accessToken')?.value;
+        console.log('Testing connection with token:', accessToken ? 'Token provided' : 'No token');
+        
+        // For now, just show a success message
+        this.connectionStatus = {
+          type: 'success',
+          icon: 'check_circle',
+          title: 'Connection Test',
+          message: 'Button click detected! This is a test response.'
+        };
 
-      this.showSuccess('Figma connection test successful!');
-    } catch (error: any) {
-      this.connectionStatus = {
-        type: 'error',
-        icon: 'error',
-        title: 'Connection Failed',
-        message: error.error?.message || 'Failed to connect to Figma. Please check your access token.'
-      };
+        this.showSuccess('Test connection completed!');
+      } catch (error: any) {
+        this.connectionStatus = {
+          type: 'error',
+          icon: 'error',
+          title: 'Connection Failed',
+          message: 'Test failed: ' + (error.message || 'Unknown error')
+        };
 
-      this.showError('Figma connection test failed. Please check your access token.');
-    } finally {
-      this.isTesting = false;
-    }
+        this.showError('Test connection failed.');
+      } finally {
+        this.isTesting = false;
+      }
+    }, 1000);
   }
 
-  async onSubmit() {
+  onSubmit() {
+    console.log('Extract Design System button clicked!');
+    
+    // Simple test to see if the button works
+    this.showSuccess('Extract Design System button is working!');
+    
     if (!this.connectionForm.valid) {
       this.showError('Please fill in all required fields');
       return;
@@ -330,69 +342,57 @@ export class FigmaConnectionComponent implements OnInit {
     this.isExtracting = true;
     this.connectionStatus = null;
 
-    try {
-      const accessToken = this.connectionForm.get('accessToken')?.value;
-      const fileIds = this.connectionForm.get('fileIds')?.value
-        .split('\n')
-        .map((id: string) => id.trim())
-        .filter((id: string) => id.length > 0);
+    // Simulate extraction for now
+    setTimeout(() => {
+      try {
+        const accessToken = this.connectionForm.get('accessToken')?.value;
+        const fileIds = this.connectionForm.get('fileIds')?.value;
+        console.log('Extracting with token:', accessToken ? 'Token provided' : 'No token');
+        console.log('File IDs:', fileIds);
 
-      const extractedFiles = [];
+        // Create mock extracted files
+        const mockFiles = [
+          {
+            id: 'mock-file-1',
+            name: 'Mock Design System',
+            lastModified: new Date(),
+            components: [],
+            styles: []
+          }
+        ];
 
-      for (const fileId of fileIds) {
-        try {
-          const file = await this.figmaService.getFile(fileId, accessToken).toPromise();
-          extractedFiles.push(file);
-          
-          // Extract design system from the file
-          const designSystem = this.designSystemService.extractDesignSystem(file, accessToken);
-          this.designSystemService.addDesignSystem(designSystem);
-        } catch (error: any) {
-          console.error(`Failed to extract file ${fileId}:`, error);
-        }
-      }
+        this.extractedFiles = mockFiles;
 
-      this.extractedFiles = extractedFiles;
-
-      if (extractedFiles.length > 0) {
         this.connectionStatus = {
           type: 'success',
           icon: 'check_circle',
-          title: 'Extraction Successful',
-          message: `Successfully extracted ${extractedFiles.length} design system(s)`
+          title: 'Extraction Test',
+          message: `Successfully processed test extraction`
         };
 
-        this.showSuccess(`Successfully extracted ${extractedFiles.length} design system(s)!`);
-      } else {
+        this.showSuccess('Test extraction completed!');
+      } catch (error: any) {
         this.connectionStatus = {
           type: 'error',
           icon: 'error',
           title: 'Extraction Failed',
-          message: 'No files could be extracted. Please check your file IDs and access token.'
+          message: 'Test failed: ' + (error.message || 'Unknown error')
         };
 
-        this.showError('Failed to extract any design systems. Please check your file IDs and access token.');
+        this.showError('Test extraction failed.');
+      } finally {
+        this.isExtracting = false;
       }
-    } catch (error: any) {
-      this.connectionStatus = {
-        type: 'error',
-        icon: 'error',
-        title: 'Extraction Failed',
-        message: error.error?.message || 'Failed to extract design systems.'
-      };
-
-      this.showError('Failed to extract design systems. Please try again.');
-    } finally {
-      this.isExtracting = false;
-    }
+    }, 2000);
   }
 
   viewFileDetails(file: any) {
-    console.log('File details:', file);
+    console.log('View file details clicked for:', file.name);
     this.showInfo(`Viewing details for ${file.name}`);
   }
 
   private showSuccess(message: string) {
+    console.log('Success:', message);
     this.snackBar.open(message, 'Close', {
       duration: 3000,
       panelClass: ['success-snackbar']
@@ -400,6 +400,7 @@ export class FigmaConnectionComponent implements OnInit {
   }
 
   private showError(message: string) {
+    console.log('Error:', message);
     this.snackBar.open(message, 'Close', {
       duration: 5000,
       panelClass: ['error-snackbar']
@@ -407,6 +408,7 @@ export class FigmaConnectionComponent implements OnInit {
   }
 
   private showInfo(message: string) {
+    console.log('Info:', message);
     this.snackBar.open(message, 'Close', {
       duration: 3000,
       panelClass: ['info-snackbar']
