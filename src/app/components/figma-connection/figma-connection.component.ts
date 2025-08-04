@@ -87,8 +87,8 @@ import { DesignSystemService } from '../../services/design-system.service';
             </mat-card-header>
             <mat-card-content>
               <p><strong>Last modified:</strong> {{ file.lastModified | date:'medium' }}</p>
-              <p><strong>Components:</strong> {{ Object.keys(file.components || {}).length }}</p>
-              <p><strong>Styles:</strong> {{ Object.keys(file.styles || {}).length }}</p>
+              <p><strong>Components:</strong> {{ getComponentCount(file) }}</p>
+              <p><strong>Styles:</strong> {{ getStyleCount(file) }}</p>
               <p><strong>Version:</strong> {{ file.version }}</p>
             </mat-card-content>
             <mat-card-actions>
@@ -384,14 +384,16 @@ export class FigmaConnectionComponent implements OnInit {
         try {
           console.log(`Processing file: ${fileId}`);
           const file = await this.figmaService.getFile(fileId, accessToken).toPromise();
-          extractedFiles.push(file);
-          successCount++;
-          
-          // Extract design system from the file
-          const designSystem = this.designSystemService.extractDesignSystem(file, accessToken);
-          this.designSystemService.addDesignSystem(designSystem);
-          
-          console.log(`Successfully extracted file: ${file.name}`);
+          if (file) {
+            extractedFiles.push(file);
+            successCount++;
+            
+            // Extract design system from the file
+            const designSystem = this.designSystemService.extractDesignSystem(file, accessToken);
+            this.designSystemService.addDesignSystem(designSystem);
+            
+            console.log(`Successfully extracted file: ${file.name}`);
+          }
         } catch (error: any) {
           console.error(`Failed to extract file ${fileId}:`, error);
           errorCount++;
@@ -445,6 +447,14 @@ export class FigmaConnectionComponent implements OnInit {
     console.log('Generate components clicked for:', file.name);
     this.showInfo(`Generating components for ${file.name}`);
     // TODO: Navigate to component generator with file data
+  }
+
+  getComponentCount(file: any): number {
+    return file?.components ? Object.keys(file.components).length : 0;
+  }
+
+  getStyleCount(file: any): number {
+    return file?.styles ? Object.keys(file.styles).length : 0;
   }
 
   private showSuccess(message: string) {
