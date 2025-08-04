@@ -44,15 +44,19 @@ import { DesignSystemService } from '../../services/design-system.service';
           <button mat-raised-button 
                   color="primary" 
                   type="button"
+                  [disabled]="isTesting || !connectionForm.get('accessToken')?.valid"
                   (click)="testConnection()">
-            <mat-icon>wifi_tethering</mat-icon>
-            Test Connection
+            <mat-icon *ngIf="!isTesting">wifi_tethering</mat-icon>
+            <mat-spinner *ngIf="isTesting" diameter="20"></mat-spinner>
+            {{ isTesting ? 'Testing...' : 'Test Connection' }}
           </button>
           <button mat-raised-button 
                   color="accent" 
-                  type="submit">
-            <mat-icon>download</mat-icon>
-            Extract Design System
+                  type="submit"
+                  [disabled]="isExtracting || !connectionForm.valid">
+            <mat-icon *ngIf="!isExtracting">download</mat-icon>
+            <mat-spinner *ngIf="isExtracting" diameter="20"></mat-spinner>
+            {{ isExtracting ? 'Extracting...' : 'Extract Design System' }}
           </button>
         </div>
       </form>
@@ -74,21 +78,27 @@ import { DesignSystemService } from '../../services/design-system.service';
 
       <!-- Extracted Files -->
       <div *ngIf="extractedFiles.length > 0" class="extracted-files">
-        <h3>Extracted Files</h3>
+        <h3>Extracted Files ({{ extractedFiles.length }})</h3>
         <div class="files-grid">
           <mat-card *ngFor="let file of extractedFiles" class="file-card">
             <mat-card-header>
               <mat-card-title>{{ file.name }}</mat-card-title>
-              <mat-card-subtitle>File ID: {{ file.id }}</mat-card-subtitle>
+              <mat-card-subtitle>File ID: {{ file.key || file.id }}</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
-              <p>Last modified: {{ file.lastModified | date }}</p>
-              <p>Components: {{ file.components?.length || 0 }}</p>
-              <p>Styles: {{ file.styles?.length || 0 }}</p>
+              <p><strong>Last modified:</strong> {{ file.lastModified | date:'medium' }}</p>
+              <p><strong>Components:</strong> {{ Object.keys(file.components || {}).length }}</p>
+              <p><strong>Styles:</strong> {{ Object.keys(file.styles || {}).length }}</p>
+              <p><strong>Version:</strong> {{ file.version }}</p>
             </mat-card-content>
             <mat-card-actions>
               <button mat-button color="primary" (click)="viewFileDetails(file)">
+                <mat-icon>visibility</mat-icon>
                 View Details
+              </button>
+              <button mat-button color="accent" (click)="generateComponents(file)">
+                <mat-icon>code</mat-icon>
+                Generate Components
               </button>
             </mat-card-actions>
           </mat-card>
@@ -250,6 +260,23 @@ import { DesignSystemService } from '../../services/design-system.service';
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
+    .file-card mat-card-content p {
+      margin: 0.5rem 0;
+      font-size: 0.9rem;
+    }
+
+    .file-card mat-card-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1rem;
+    }
+
+    .file-card mat-card-actions button {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
     @media (max-width: 768px) {
       .form-actions {
         flex-direction: column;
@@ -257,6 +284,10 @@ import { DesignSystemService } from '../../services/design-system.service';
 
       .files-grid {
         grid-template-columns: 1fr;
+      }
+
+      .file-card mat-card-actions {
+        flex-direction: column;
       }
     }
   `]
@@ -284,55 +315,49 @@ export class FigmaConnectionComponent implements OnInit {
     console.log('FigmaConnectionComponent initialized');
   }
 
-  testConnection() {
+  async testConnection() {
     console.log('Test Connection button clicked!');
     
-    // Simple test to see if the button works
-    this.showSuccess('Test Connection button is working!');
-    
-    if (!this.connectionForm.valid) {
-      this.showError('Please fill in all required fields');
+    if (!this.connectionForm.get('accessToken')?.valid) {
+      this.showError('Please enter a valid access token');
       return;
     }
 
     this.isTesting = true;
     this.connectionStatus = null;
 
-    // Simulate API call for now
-    setTimeout(() => {
-      try {
-        const accessToken = this.connectionForm.get('accessToken')?.value;
-        console.log('Testing connection with token:', accessToken ? 'Token provided' : 'No token');
-        
-        // For now, just show a success message
-        this.connectionStatus = {
-          type: 'success',
-          icon: 'check_circle',
-          title: 'Connection Test',
-          message: 'Button click detected! This is a test response.'
-        };
+    try {
+      const accessToken = this.connectionForm.get('accessToken')?.value;
+      console.log('Testing connection with token:', accessToken ? 'Token provided' : 'No token');
+      
+      const response = await this.figmaService.testConnection(accessToken).toPromise();
+      
+      this.connectionStatus = {
+        type: 'success',
+        icon: 'check_circle',
+        title: 'Connection Successful',
+        message: `Connected to Figma as ${response.handle || response.email || 'User'}`
+      };
 
-        this.showSuccess('Test connection completed!');
-      } catch (error: any) {
-        this.connectionStatus = {
-          type: 'error',
-          icon: 'error',
-          title: 'Connection Failed',
-          message: 'Test failed: ' + (error.message || 'Unknown error')
-        };
+      this.showSuccess('Figma connection test successful!');
+    } catch (error: any) {
+      console.error('Connection test failed:', error);
+      
+      this.connectionStatus = {
+        type: 'error',
+        icon: 'error',
+        title: 'Connection Failed',
+        message: error.error?.message || error.message || 'Failed to connect to Figma. Please check your access token.'
+      };
 
-        this.showError('Test connection failed.');
-      } finally {
-        this.isTesting = false;
-      }
-    }, 1000);
+      this.showError('Figma connection test failed. Please check your access token.');
+    } finally {
+      this.isTesting = false;
+    }
   }
 
-  onSubmit() {
+  async onSubmit() {
     console.log('Extract Design System button clicked!');
-    
-    // Simple test to see if the button works
-    this.showSuccess('Extract Design System button is working!');
     
     if (!this.connectionForm.valid) {
       this.showError('Please fill in all required fields');
@@ -342,53 +367,84 @@ export class FigmaConnectionComponent implements OnInit {
     this.isExtracting = true;
     this.connectionStatus = null;
 
-    // Simulate extraction for now
-    setTimeout(() => {
-      try {
-        const accessToken = this.connectionForm.get('accessToken')?.value;
-        const fileIds = this.connectionForm.get('fileIds')?.value;
-        console.log('Extracting with token:', accessToken ? 'Token provided' : 'No token');
-        console.log('File IDs:', fileIds);
+    try {
+      const accessToken = this.connectionForm.get('accessToken')?.value;
+      const fileIds = this.connectionForm.get('fileIds')?.value
+        .split('\n')
+        .map((id: string) => id.trim())
+        .filter((id: string) => id.length > 0);
 
-        // Create mock extracted files
-        const mockFiles = [
-          {
-            id: 'mock-file-1',
-            name: 'Mock Design System',
-            lastModified: new Date(),
-            components: [],
-            styles: []
-          }
-        ];
+      console.log('Extracting files:', fileIds);
 
-        this.extractedFiles = mockFiles;
+      const extractedFiles = [];
+      let successCount = 0;
+      let errorCount = 0;
 
+      for (const fileId of fileIds) {
+        try {
+          console.log(`Processing file: ${fileId}`);
+          const file = await this.figmaService.getFile(fileId, accessToken).toPromise();
+          extractedFiles.push(file);
+          successCount++;
+          
+          // Extract design system from the file
+          const designSystem = this.designSystemService.extractDesignSystem(file, accessToken);
+          this.designSystemService.addDesignSystem(designSystem);
+          
+          console.log(`Successfully extracted file: ${file.name}`);
+        } catch (error: any) {
+          console.error(`Failed to extract file ${fileId}:`, error);
+          errorCount++;
+        }
+      }
+
+      this.extractedFiles = extractedFiles;
+
+      if (extractedFiles.length > 0) {
         this.connectionStatus = {
           type: 'success',
           icon: 'check_circle',
-          title: 'Extraction Test',
-          message: `Successfully processed test extraction`
+          title: 'Extraction Successful',
+          message: `Successfully extracted ${successCount} file(s)${errorCount > 0 ? `, ${errorCount} failed` : ''}`
         };
 
-        this.showSuccess('Test extraction completed!');
-      } catch (error: any) {
+        this.showSuccess(`Successfully extracted ${successCount} design system(s)!`);
+      } else {
         this.connectionStatus = {
           type: 'error',
           icon: 'error',
           title: 'Extraction Failed',
-          message: 'Test failed: ' + (error.message || 'Unknown error')
+          message: 'No files could be extracted. Please check your file IDs and access token.'
         };
 
-        this.showError('Test extraction failed.');
-      } finally {
-        this.isExtracting = false;
+        this.showError('Failed to extract any design systems. Please check your file IDs and access token.');
       }
-    }, 2000);
+    } catch (error: any) {
+      console.error('Extraction failed:', error);
+      
+      this.connectionStatus = {
+        type: 'error',
+        icon: 'error',
+        title: 'Extraction Failed',
+        message: error.error?.message || error.message || 'Failed to extract design systems.'
+      };
+
+      this.showError('Failed to extract design systems. Please try again.');
+    } finally {
+      this.isExtracting = false;
+    }
   }
 
   viewFileDetails(file: any) {
     console.log('View file details clicked for:', file.name);
     this.showInfo(`Viewing details for ${file.name}`);
+    // TODO: Implement file details modal or navigation
+  }
+
+  generateComponents(file: any) {
+    console.log('Generate components clicked for:', file.name);
+    this.showInfo(`Generating components for ${file.name}`);
+    // TODO: Navigate to component generator with file data
   }
 
   private showSuccess(message: string) {
