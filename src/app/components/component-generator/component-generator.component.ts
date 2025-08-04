@@ -108,9 +108,34 @@ import * as JSZip from 'jszip';
             </div>
           </div>
           
+          <!-- Group Navigation Tags -->
+          <div class="group-navigation">
+            <div class="nav-header">
+              <h4>Navigate Groups</h4>
+              <button mat-button color="primary" (click)="clearGroupSelection()">
+                <mat-icon>clear_all</mat-icon>
+                Show All
+              </button>
+            </div>
+            <div class="group-tags">
+              <button mat-chip 
+                      *ngFor="let groupName of getGroupKeys()" 
+                      [class.selected]="isGroupSelected(groupName)"
+                      (click)="selectGroup(groupName)"
+                      class="group-tag">
+                <mat-icon class="tag-icon">{{ getGroupIcon(groupName) }}</mat-icon>
+                {{ groupName }}
+                <span class="tag-count">({{ groupedComponents[groupName].length }})</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Grouped Components -->
           <div class="component-groups">
-            <div *ngFor="let groupName of getGroupKeys()" class="component-group">
+            <div *ngFor="let groupName of getGroupKeys()" 
+                 [id]="'group-' + groupName"
+                 class="component-group"
+                 [class.highlighted]="isGroupSelected(groupName)">
               <div class="group-header">
                 <mat-icon class="group-icon">{{ getGroupIcon(groupName) }}</mat-icon>
                 <h4>{{ groupName }}</h4>
@@ -1163,6 +1188,89 @@ export class {{ selectedComponent.name }}Module {{ '{' }} {{ '}' }}</code></pre>
       font-weight: 600;
     }
 
+    /* Group Navigation Styles */
+    .group-navigation {
+      margin-bottom: 2rem;
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid #e9ecef;
+    }
+
+    .nav-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .nav-header h4 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .group-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .group-tag {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      border: 2px solid #e9ecef;
+      background: white;
+      color: #666;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      outline: none;
+    }
+
+    .group-tag:hover {
+      border-color: #007bff;
+      color: #007bff;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+    }
+
+    .group-tag.selected {
+      background: #007bff;
+      color: white;
+      border-color: #007bff;
+      box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+    }
+
+    .group-tag.selected:hover {
+      background: #0056b3;
+      border-color: #0056b3;
+      color: white;
+    }
+
+    .tag-icon {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .tag-count {
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+
+    .component-group.highlighted {
+      border: 2px solid #007bff;
+      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
     @media (max-width: 768px) {
       .preview-container {
         grid-template-columns: 1fr;
@@ -1205,6 +1313,25 @@ export class {{ selectedComponent.name }}Module {{ '{' }} {{ '}' }}</code></pre>
       .component-group .components-grid {
         grid-template-columns: 1fr;
       }
+
+      .group-navigation {
+        padding: 1rem;
+      }
+
+      .nav-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .group-tags {
+        gap: 0.5rem;
+      }
+
+      .group-tag {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+      }
     }
   `]
 })
@@ -1215,6 +1342,7 @@ export class ComponentGeneratorComponent implements OnInit {
   groupedComponents: { [key: string]: any[] } = {};
   previewComponent: any = null;
   selectedComponent: any = null;
+  selectedGroup: string | null = null;
   isGenerating = false;
   isGeneratingSingle = false;
   isGeneratingAll = false;
@@ -1339,6 +1467,32 @@ export class ComponentGeneratorComponent implements OnInit {
     };
     
     return iconMap[groupName] || 'extension';
+  }
+
+  selectGroup(groupName: string): void {
+    this.selectedGroup = groupName;
+    this.scrollToGroup(groupName);
+  }
+
+  scrollToGroup(groupName: string): void {
+    setTimeout(() => {
+      const element = document.getElementById(`group-${groupName}`);
+      if (element) {
+        element.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start',
+          inline: 'nearest'
+        });
+      }
+    }, 100);
+  }
+
+  isGroupSelected(groupName: string): boolean {
+    return this.selectedGroup === groupName;
+  }
+
+  clearGroupSelection(): void {
+    this.selectedGroup = null;
   }
 
   downloadAllComponents(): void {
