@@ -664,7 +664,7 @@ export class FigmaConnectionComponent implements OnInit {
       }
     });
 
-    zip.generateAsync({ type: 'blob' }).then(content => {
+    zip.generateAsync({ type: 'blob' }).then((content: Blob) => {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(content);
       link.download = 'generated-components.zip';

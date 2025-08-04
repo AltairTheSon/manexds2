@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { DesignSystemService, DesignSystem, DesignComponent } from '../../services/design-system.service';
 import { ComponentGeneratorService, GeneratedComponent } from '../../services/component-generator.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import JSZip from 'jszip';
+import * as JSZip from 'jszip';
 
 @Component({
   selector: 'app-component-generator',
@@ -1358,7 +1358,7 @@ export class ComponentGeneratorComponent implements OnInit {
       }
     });
 
-    zip.generateAsync({ type: 'blob' }).then(content => {
+    zip.generateAsync({ type: 'blob' }).then((content: Blob) => {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(content);
       link.download = 'generated-components.zip';
@@ -1379,7 +1379,7 @@ export class ComponentGeneratorComponent implements OnInit {
       componentFolder.file(`${component.name.toLowerCase()}.component.ts`, component.typescript);
     }
 
-    zip.generateAsync({ type: 'blob' }).then(content => {
+    zip.generateAsync({ type: 'blob' }).then((content: Blob) => {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(content);
       link.download = `${component.name.toLowerCase()}-component.zip`;
