@@ -120,9 +120,30 @@ export class DesignSystemService {
   private extractComponents(figmaFile: any): DesignComponent[] {
     const components: DesignComponent[] = [];
     
-    // Implementation for component extraction
-    // This would parse the Figma file structure and extract components
+    console.log('Extracting components from Figma file:', figmaFile.name);
+    console.log('Available components:', figmaFile.components);
     
+    if (figmaFile.components) {
+      Object.keys(figmaFile.components).forEach((componentKey, index) => {
+        const figmaComponent = figmaFile.components[componentKey];
+        console.log(`Processing component: ${figmaComponent.name}`);
+        
+        const component: DesignComponent = {
+          id: componentKey,
+          name: figmaComponent.name || `Component ${index + 1}`,
+          category: 'UI Components',
+          figmaNodeId: componentKey,
+          code: '',
+          scss: '',
+          html: '',
+          typescript: ''
+        };
+        
+        components.push(component);
+      });
+    }
+    
+    console.log(`Extracted ${components.length} components`);
     return components;
   }
 
@@ -132,9 +153,42 @@ export class DesignSystemService {
     const typography: TypographyToken[] = [];
     const spacing: SpacingToken[] = [];
     
-    // Implementation for token extraction
-    // This would parse the Figma file structure and extract design tokens
+    console.log('Extracting design tokens from Figma file:', figmaFile.name);
+    console.log('Available styles:', figmaFile.styles);
     
+    if (figmaFile.styles) {
+      Object.keys(figmaFile.styles).forEach((styleKey, index) => {
+        const figmaStyle = figmaFile.styles[styleKey];
+        console.log(`Processing style: ${figmaStyle.name}`);
+        
+        if (figmaStyle.styleType === 'FILL') {
+          colors.push({
+            name: figmaStyle.name,
+            value: '#000000', // Default color, would need to extract from style
+            category: 'Colors'
+          });
+        } else if (figmaStyle.styleType === 'TEXT') {
+          typography.push({
+            name: figmaStyle.name,
+            fontFamily: 'Inter',
+            fontSize: '16px',
+            fontWeight: 400,
+            lineHeight: '1.5'
+          });
+        }
+      });
+    }
+    
+    // Add some default spacing tokens
+    spacing.push(
+      { name: 'spacing-xs', value: '4px' },
+      { name: 'spacing-sm', value: '8px' },
+      { name: 'spacing-md', value: '16px' },
+      { name: 'spacing-lg', value: '24px' },
+      { name: 'spacing-xl', value: '32px' }
+    );
+    
+    console.log(`Extracted ${colors.length} colors, ${typography.length} typography, ${spacing.length} spacing tokens`);
     return { colors, typography, spacing };
   }
 

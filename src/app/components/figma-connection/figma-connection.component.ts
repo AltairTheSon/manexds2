@@ -494,61 +494,87 @@ export class FigmaConnectionComponent implements OnInit {
     this.isExtracting = true;
     this.connectionStatus = null;
 
-    try {
-      const accessToken = this.connectionForm.get('accessToken')?.value;
-      const fileIds = this.connectionForm.get('fileIds')?.value
-        .split('\n')
-        .map((id: string) => id.trim())
-        .filter((id: string) => id.length > 0);
+          try {
+        const accessToken = this.connectionForm.get('accessToken')?.value;
+        const fileIds = this.connectionForm.get('fileIds')?.value
+          .split('\n')
+          .map((id: string) => id.trim())
+          .filter((id: string) => id.length > 0);
 
-      console.log('Extracting files:', fileIds);
+        console.log('Extracting files:', fileIds);
+        console.log('Access token provided:', !!accessToken);
 
-      const extractedFiles = [];
-      let successCount = 0;
-      let errorCount = 0;
+        const extractedFiles = [];
+        let successCount = 0;
+        let errorCount = 0;
 
-      for (const fileId of fileIds) {
-        try {
-          console.log(`Processing file: ${fileId}`);
-          const file = await this.figmaService.getFile(fileId, accessToken).toPromise();
-          if (file) {
-            // Get file ID safely
-            const fileId = file.id || file.key;
-            if (!fileId) {
-              console.error(`No file ID found for file: ${file.name}`);
-              continue;
-            }
-
-            // Check if design system already exists
-            if (this.designSystemService.hasDesignSystem(fileId)) {
-              console.log(`Design system already exists for file: ${file.name}`);
-              // Update existing design system
-              const existingDs = this.designSystemService.getDesignSystemByFileId(fileId);
-              if (existingDs) {
-                const updatedDs = this.designSystemService.extractDesignSystem(file, accessToken);
-                updatedDs.id = existingDs.id; // Keep the same ID
-                this.designSystemService.updateDesignSystem(existingDs.id, updatedDs);
-              }
-            } else {
-              // Create new design system
-              const designSystem = this.designSystemService.extractDesignSystem(file, accessToken);
-              this.designSystemService.addDesignSystem(designSystem);
-            }
+        for (const fileId of fileIds) {
+          try {
+            console.log(`Processing file: ${fileId}`);
+            console.log(`Making API call to Figma for file: ${fileId}`);
             
-            extractedFiles.push(file);
-            successCount++;
-            console.log(`Successfully extracted file: ${file.name}`);
+            const file = await this.figmaService.getFile(fileId, accessToken).toPromise();
+            console.log(`API response received for file ${fileId}:`, file);
+            
+            if (file) {
+              console.log(`File data received:`, {
+                name: file.name,
+                id: file.id,
+                key: file.key,
+                components: file.components ? Object.keys(file.components).length : 0,
+                styles: file.styles ? Object.keys(file.styles).length : 0
+              });
+
+              // Get file ID safely
+              const fileIdFromResponse = file.id || file.key;
+              if (!fileIdFromResponse) {
+                console.error(`No file ID found for file: ${file.name}`);
+                continue;
+              }
+
+              // Check if design system already exists
+              if (this.designSystemService.hasDesignSystem(fileIdFromResponse)) {
+                console.log(`Design system already exists for file: ${file.name}`);
+                // Update existing design system
+                const existingDs = this.designSystemService.getDesignSystemByFileId(fileIdFromResponse);
+                if (existingDs) {
+                  const updatedDs = this.designSystemService.extractDesignSystem(file, accessToken);
+                  updatedDs.id = existingDs.id; // Keep the same ID
+                  this.designSystemService.updateDesignSystem(existingDs.id, updatedDs);
+                }
+              } else {
+                // Create new design system
+                console.log(`Creating new design system for file: ${file.name}`);
+                const designSystem = this.designSystemService.extractDesignSystem(file, accessToken);
+                this.designSystemService.addDesignSystem(designSystem);
+                console.log(`Design system created with ID: ${designSystem.id}`);
+              }
+              
+              extractedFiles.push(file);
+              successCount++;
+              console.log(`Successfully extracted file: ${file.name}`);
+            } else {
+              console.error(`No file data received for file ID: ${fileId}`);
+              errorCount++;
+            }
+          } catch (error: any) {
+            console.error(`Failed to extract file ${fileId}:`, error);
+            console.error(`Error details:`, {
+              message: error.message,
+              status: error.status,
+              statusText: error.statusText,
+              error: error.error
+            });
+            errorCount++;
           }
-        } catch (error: any) {
-          console.error(`Failed to extract file ${fileId}:`, error);
-          errorCount++;
         }
-      }
 
-      // Reload all design systems to show updated data
-      this.loadExistingDesignSystems();
+        console.log(`Extraction completed. Success: ${successCount}, Errors: ${errorCount}`);
 
-      if (extractedFiles.length > 0) {
+        // Reload all design systems to show updated data
+        this.loadExistingDesignSystems();
+
+        if (extractedFiles.length > 0) {
         this.connectionStatus = {
           type: 'success',
           icon: 'check_circle',
