@@ -19,6 +19,30 @@ import * as JSZip from 'jszip';
         <div *ngIf="designSystems.length > 0" class="design-systems">
           <h3>Design Systems ({{ designSystems.length }})</h3>
           
+          <!-- Bulk Generation Progress -->
+          <div *ngIf="isGeneratingAll" class="generation-progress">
+            <mat-card class="progress-card">
+              <mat-card-content>
+                <div class="progress-header">
+                  <h4>Generating Components</h4>
+                  <p>{{ currentGeneratingComponent || 'Preparing...' }}</p>
+                </div>
+                
+                <div class="progress-bar-container">
+                  <mat-progress-bar 
+                    mode="determinate" 
+                    [value]="generationProgress"
+                    color="primary">
+                  </mat-progress-bar>
+                  <div class="progress-text">
+                    <span>{{ generationProgress }}%</span>
+                    <span>{{ generatedComponents.length }} / {{ totalComponentsToGenerate }} components</span>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+          
           <div class="systems-grid">
             <mat-card *ngFor="let system of designSystems" class="system-card">
               <mat-card-header>
@@ -51,14 +75,15 @@ import * as JSZip from 'jszip';
                 <button mat-raised-button 
                         color="primary" 
                         (click)="generateComponents(system)"
-                        [disabled]="isGenerating">
-                  <mat-icon *ngIf="!isGenerating">code</mat-icon>
-                  <mat-spinner *ngIf="isGenerating" diameter="20"></mat-spinner>
-                  {{ isGenerating ? 'Generating...' : 'Generate Components' }}
+                        [disabled]="isGeneratingAll || isGeneratingSingle">
+                  <mat-icon *ngIf="!isGeneratingAll">code</mat-icon>
+                  <mat-spinner *ngIf="isGeneratingAll" diameter="20"></mat-spinner>
+                  {{ isGeneratingAll ? 'Generating...' : 'Generate Components' }}
                 </button>
                 <button mat-button 
                         color="accent" 
-                        (click)="viewComponents(system)">
+                        (click)="viewComponents(system)"
+                        [disabled]="isGeneratingAll || isGeneratingSingle">
                   <mat-icon>visibility</mat-icon>
                   View Components
                 </button>
@@ -99,19 +124,42 @@ import * as JSZip from 'jszip';
               </mat-card-content>
               
               <mat-card-actions>
-                <button mat-button color="primary" (click)="generateSingleComponent(component)">
-                  <mat-icon>code</mat-icon>
-                  Generate Component
+                <button mat-button 
+                        color="primary" 
+                        (click)="generateSingleComponent(component)"
+                        [disabled]="isGeneratingAll || isGeneratingSingle">
+                  <mat-icon *ngIf="!isGeneratingSingle">code</mat-icon>
+                  <mat-spinner *ngIf="isGeneratingSingle" diameter="16"></mat-spinner>
+                  {{ isGeneratingSingle ? 'Generating...' : 'Generate Component' }}
                 </button>
-                <button mat-button color="accent" (click)="viewComponentDetails(component)">
+                <button mat-button 
+                        color="accent" 
+                        (click)="viewComponentDetails(component)"
+                        [disabled]="isGeneratingAll || isGeneratingSingle">
                   <mat-icon>visibility</mat-icon>
                   View Details
                 </button>
-                <button mat-button color="warn" (click)="showComponentPreview(component)">
+                <button mat-button 
+                        color="warn" 
+                        (click)="showComponentPreview(component)"
+                        [disabled]="isGeneratingAll || isGeneratingSingle">
                   <mat-icon>preview</mat-icon>
                   Preview
                 </button>
               </mat-card-actions>
+              
+              <!-- Single Component Generation Progress -->
+              <div *ngIf="isGeneratingSingle && currentGeneratingComponent === component.name" class="single-progress">
+                <mat-progress-bar 
+                  mode="determinate" 
+                  [value]="generationProgress"
+                  color="accent">
+                </mat-progress-bar>
+                <div class="progress-text">
+                  <span>{{ generationProgress }}%</span>
+                  <span>Generating {{ component.name }}</span>
+                </div>
+              </div>
             </mat-card>
           </div>
         </div>
@@ -973,6 +1021,51 @@ export class {{ selectedComponent.name }}Module {{ '{' }} {{ '}' }}</code></pre>
       line-height: 1.4;
     }
 
+    /* Progress Bar Styles */
+    .generation-progress {
+      margin-bottom: 2rem;
+    }
+
+    .progress-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .progress-header h4 {
+      margin: 0 0 0.5rem 0;
+      font-weight: 600;
+    }
+
+    .progress-header p {
+      margin: 0 0 1rem 0;
+      opacity: 0.9;
+    }
+
+    .progress-bar-container {
+      margin-top: 1rem;
+    }
+
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .single-progress {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    .single-progress .progress-text {
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+    }
+
     @media (max-width: 768px) {
       .preview-container {
         grid-template-columns: 1fr;
@@ -991,6 +1084,12 @@ export class {{ selectedComponent.name }}Module {{ '{' }} {{ '}' }}</code></pre>
       .details-modal {
         padding: 1rem;
       }
+
+      .progress-text {
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: center;
+      }
     }
   `]
 })
@@ -1001,6 +1100,11 @@ export class ComponentGeneratorComponent implements OnInit {
   previewComponent: any = null;
   selectedComponent: any = null;
   isGenerating = false;
+  isGeneratingSingle = false;
+  isGeneratingAll = false;
+  generationProgress = 0;
+  currentGeneratingComponent = '';
+  totalComponentsToGenerate = 0;
   activeTab = 'html';
   detailActiveTab = 'html';
 
@@ -1026,17 +1130,28 @@ export class ComponentGeneratorComponent implements OnInit {
       return;
     }
 
-    this.isGenerating = true;
-    this.showInfo(`Generating components for ${designSystem.name}...`);
+    this.isGeneratingAll = true;
+    this.generationProgress = 0;
+    this.totalComponentsToGenerate = designSystem.components.length;
+    this.currentGeneratingComponent = '';
+    this.generatedComponents = [];
+    
+    this.showInfo(`Generating ${designSystem.components.length} components for ${designSystem.name}...`);
 
     try {
+      // Subscribe to progress updates
+      this.componentGeneratorService.progressSubject.subscribe(progress => {
+        this.generationProgress = progress.progress;
+        this.currentGeneratingComponent = progress.currentComponent;
+      });
+
       this.generatedComponents = await this.componentGeneratorService.generateComponents(designSystem);
       this.showSuccess(`Successfully generated ${this.generatedComponents.length} components!`);
     } catch (error: any) {
       console.error('Component generation failed:', error);
       this.showError('Failed to generate components. Please try again.');
     } finally {
-      this.isGenerating = false;
+      this.resetGenerationState();
     }
   }
 
@@ -1127,12 +1242,32 @@ export class ComponentGeneratorComponent implements OnInit {
   }
 
   async generateSingleComponent(component: any): Promise<void> {
+    this.isGeneratingSingle = true;
+    this.currentGeneratingComponent = component.name;
+    this.generationProgress = 0;
+    
     try {
+      // Simulate progress for single component
+      const progressInterval = setInterval(() => {
+        if (this.generationProgress < 90) {
+          this.generationProgress += 10;
+        }
+      }, 100);
+
       const generatedComponent = await this.componentGeneratorService.generateSingleComponent(component);
       this.generatedComponents.push(generatedComponent);
       this.showSuccess(`Generated component: ${component.name}`);
+      
+      clearInterval(progressInterval);
+      this.generationProgress = 100;
+      
+      // Reset after a short delay to show completion
+      setTimeout(() => {
+        this.resetSingleGenerationState();
+      }, 500);
     } catch (error) {
       this.showError(`Failed to generate component: ${component.name}`);
+      this.resetSingleGenerationState();
     }
   }
 
@@ -1181,6 +1316,19 @@ export class ComponentGeneratorComponent implements OnInit {
     }).catch(() => {
       this.showError('Failed to copy to clipboard.');
     });
+  }
+
+  private resetGenerationState(): void {
+    this.isGeneratingAll = false;
+    this.generationProgress = 0;
+    this.currentGeneratingComponent = '';
+    this.totalComponentsToGenerate = 0;
+  }
+
+  private resetSingleGenerationState(): void {
+    this.isGeneratingSingle = false;
+    this.generationProgress = 0;
+    this.currentGeneratingComponent = '';
   }
 
   private showSuccess(message: string): void {
