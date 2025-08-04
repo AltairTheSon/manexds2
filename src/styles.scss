@@ -240,6 +240,55 @@ body {
   color: #2196f3;
 }
 
+/* Custom Snackbar Styles */
+.success-snackbar {
+  background: #4caf50;
+  color: white;
+}
+
+.success-snackbar .mat-simple-snackbar-action {
+  color: white;
+}
+
+.error-snackbar {
+  background: #f44336;
+  color: white;
+}
+
+.error-snackbar .mat-simple-snackbar-action {
+  color: white;
+}
+
+.info-snackbar {
+  background: #2196f3;
+  color: white;
+}
+
+.info-snackbar .mat-simple-snackbar-action {
+  color: white;
+}
+
+/* Material Design Overrides */
+.mat-mdc-snack-bar-container {
+  &.success-snackbar {
+    --mdc-snackbar-container-color: #4caf50;
+    --mat-mdc-snack-bar-button-color: white;
+    --mdc-snackbar-supporting-text-color: white;
+  }
+  
+  &.error-snackbar {
+    --mdc-snackbar-container-color: #f44336;
+    --mat-mdc-snack-bar-button-color: white;
+    --mdc-snackbar-supporting-text-color: white;
+  }
+  
+  &.info-snackbar {
+    --mdc-snackbar-container-color: #2196f3;
+    --mat-mdc-snack-bar-button-color: white;
+    --mdc-snackbar-supporting-text-color: white;
+  }
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .container {
