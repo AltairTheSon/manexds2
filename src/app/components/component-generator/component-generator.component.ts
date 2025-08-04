@@ -107,6 +107,10 @@ import * as JSZip from 'jszip';
                   <mat-icon>visibility</mat-icon>
                   View Details
                 </button>
+                <button mat-button color="warn" (click)="showComponentPreview(component)">
+                  <mat-icon>preview</mat-icon>
+                  Preview
+                </button>
               </mat-card-actions>
             </mat-card>
           </div>
@@ -188,6 +192,199 @@ import * as JSZip from 'jszip';
             Connect to Figma
           </button>
         </div>
+      </div>
+
+      <!-- Component Preview Modal -->
+      <div *ngIf="previewComponent" class="preview-modal">
+        <mat-card class="preview-card">
+          <mat-card-header>
+            <mat-card-title>{{ previewComponent.name }} - Preview</mat-card-title>
+            <button mat-icon-button (click)="closePreview()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <div class="preview-container">
+              <div class="preview-frame">
+                <div class="preview-content" [innerHTML]="getComponentPreview(previewComponent)"></div>
+              </div>
+              
+              <div class="preview-info">
+                <h4>Component Information</h4>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value">{{ previewComponent.name }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Category:</span>
+                    <span class="info-value">{{ previewComponent.category }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">ID:</span>
+                    <span class="info-value">{{ previewComponent.id }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Figma Node:</span>
+                    <span class="info-value">{{ previewComponent.figmaNodeId }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+          
+          <mat-card-actions>
+            <button mat-raised-button color="primary" (click)="generateSingleComponent(previewComponent)">
+              <mat-icon>code</mat-icon>
+              Generate Component
+            </button>
+            <button mat-button (click)="closePreview()">
+              <mat-icon>close</mat-icon>
+              Close
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+
+      <!-- Component Details Modal -->
+      <div *ngIf="selectedComponent" class="details-modal">
+        <mat-card class="details-card">
+          <mat-card-header>
+            <mat-card-title>{{ selectedComponent.name }} - Details</mat-card-title>
+            <button mat-icon-button (click)="closeDetails()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <mat-tab-group>
+              <!-- Component Info Tab -->
+              <mat-tab label="Information">
+                <div class="details-content">
+                  <div class="detail-section">
+                    <h4>Basic Information</h4>
+                    <div class="detail-grid">
+                      <div class="detail-item">
+                        <span class="detail-label">Name:</span>
+                        <span class="detail-value">{{ selectedComponent.name }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Category:</span>
+                        <span class="detail-value">{{ selectedComponent.category }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">ID:</span>
+                        <span class="detail-value">{{ selectedComponent.id }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Figma Node ID:</span>
+                        <span class="detail-value">{{ selectedComponent.figmaNodeId }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="detail-section">
+                    <h4>Generated Code</h4>
+                    <div class="code-tabs">
+                      <button mat-button 
+                              [class.active]="detailActiveTab === 'html'"
+                              (click)="setDetailActiveTab('html')">
+                        HTML
+                      </button>
+                      <button mat-button 
+                              [class.active]="detailActiveTab === 'scss'"
+                              (click)="setDetailActiveTab('scss')">
+                        SCSS
+                      </button>
+                      <button mat-button 
+                              [class.active]="detailActiveTab === 'ts'"
+                              (click)="setDetailActiveTab('ts')">
+                        TypeScript
+                      </button>
+                    </div>
+                    
+                    <div class="code-preview">
+                      <pre><code>{{ getComponentCode(selectedComponent, detailActiveTab) }}</code></pre>
+                    </div>
+                  </div>
+                </div>
+              </mat-tab>
+              
+              <!-- Properties Tab -->
+              <mat-tab label="Properties">
+                <div class="properties-content">
+                  <h4>Component Properties</h4>
+                  <p>This component can be customized with the following properties:</p>
+                  
+                  <div class="properties-list">
+                    <div class="property-item">
+                      <div class="property-header">
+                        <span class="property-name">@Input() data</span>
+                        <span class="property-type">any</span>
+                      </div>
+                      <p class="property-description">Data object to be passed to the component</p>
+                    </div>
+                    
+                    <div class="property-item">
+                      <div class="property-header">
+                        <span class="property-name">@Output() action</span>
+                        <span class="property-type">EventEmitter&lt;any&gt;</span>
+                      </div>
+                      <p class="property-description">Event emitter for component actions</p>
+                    </div>
+                  </div>
+                </div>
+              </mat-tab>
+              
+              <!-- Usage Tab -->
+              <mat-tab label="Usage">
+                <div class="usage-content">
+                  <h4>How to Use</h4>
+                  
+                  <div class="usage-example">
+                    <h5>Basic Usage</h5>
+                    <pre><code>&lt;app-{{ selectedComponent.name.toLowerCase() }}&gt;&lt;/app-{{ selectedComponent.name.toLowerCase() }}&gt;</code></pre>
+                  </div>
+                  
+                  <div class="usage-example">
+                    <h5>With Data</h5>
+                    <pre><code>&lt;app-{{ selectedComponent.name.toLowerCase() }} 
+  [data]="componentData"
+  (action)="handleAction($event)"&gt;
+&lt;/app-{{ selectedComponent.name.toLowerCase() }}&gt;</code></pre>
+                  </div>
+                  
+                  <div class="usage-example">
+                    <h5>In Module</h5>
+                    <pre><code>import {{ '{' }} {{ selectedComponent.name }}Component {{ '}' }} from './{{ selectedComponent.name.toLowerCase() }}.component';
+
+@NgModule({{ '{' }}
+  declarations: [{{ selectedComponent.name }}Component],
+  exports: [{{ selectedComponent.name }}Component]
+{{ '}' }})
+export class {{ selectedComponent.name }}Module {{ '{' }} {{ '}' }}</code></pre>
+                  </div>
+                </div>
+              </mat-tab>
+            </mat-tab-group>
+          </mat-card-content>
+          
+          <mat-card-actions>
+            <button mat-raised-button color="primary" (click)="generateSingleComponent(selectedComponent)">
+              <mat-icon>code</mat-icon>
+              Generate Component
+            </button>
+            <button mat-button color="accent" (click)="copyComponentCode(selectedComponent)">
+              <mat-icon>content_copy</mat-icon>
+              Copy Code
+            </button>
+            <button mat-button (click)="closeDetails()">
+              <mat-icon>close</mat-icon>
+              Close
+            </button>
+          </mat-card-actions>
+        </mat-card>
       </div>
     </div>
   `,
@@ -497,14 +694,315 @@ import * as JSZip from 'jszip';
       margin: 0.25rem 0;
       font-size: 0.9rem;
     }
+
+    /* Preview Modal Styles */
+    .preview-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 2rem;
+    }
+
+    .preview-card {
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      width: 100%;
+    }
+
+    .preview-container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+    }
+
+    .preview-frame {
+      border: 2px solid #eee;
+      border-radius: 8px;
+      padding: 2rem;
+      background: white;
+      min-height: 300px;
+    }
+
+    .preview-content {
+      width: 100%;
+    }
+
+    .preview-content h3 {
+      margin: 0 0 1rem 0;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .preview-content p {
+      margin: 0 0 1.5rem 0;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .preview-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .preview-btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .preview-btn.primary {
+      background: #007bff;
+      color: white;
+    }
+
+    .preview-btn.primary:hover {
+      background: #0056b3;
+    }
+
+    .preview-btn.secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .preview-btn.secondary:hover {
+      background: #545b62;
+    }
+
+    .preview-info h4 {
+      margin: 0 0 1rem 0;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .info-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    .info-label {
+      font-weight: 500;
+      color: #666;
+    }
+
+    .info-value {
+      font-weight: 600;
+      color: #333;
+    }
+
+    /* Details Modal Styles */
+    .details-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 2rem;
+    }
+
+    .details-card {
+      max-width: 900px;
+      max-height: 90vh;
+      overflow-y: auto;
+      width: 100%;
+    }
+
+    .details-content {
+      padding: 1rem 0;
+    }
+
+    .detail-section {
+      margin-bottom: 2rem;
+    }
+
+    .detail-section h4 {
+      margin: 0 0 1rem 0;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    .detail-label {
+      font-weight: 500;
+      color: #666;
+    }
+
+    .detail-value {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .code-tabs {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .code-tabs button {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .code-tabs button.active {
+      background: #007bff;
+      color: white;
+    }
+
+    .code-tabs button:not(.active) {
+      background: #f8f9fa;
+      color: #666;
+    }
+
+    .properties-content,
+    .usage-content {
+      padding: 1rem 0;
+    }
+
+    .properties-content h4,
+    .usage-content h4 {
+      margin: 0 0 1rem 0;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .properties-content p {
+      margin: 0 0 1.5rem 0;
+      color: #666;
+    }
+
+    .properties-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .property-item {
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #007bff;
+    }
+
+    .property-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .property-name {
+      font-weight: 600;
+      color: #333;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+
+    .property-type {
+      font-size: 0.8rem;
+      color: #666;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+
+    .property-description {
+      margin: 0;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .usage-example {
+      margin-bottom: 2rem;
+    }
+
+    .usage-example h5 {
+      margin: 0 0 0.75rem 0;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .usage-example pre {
+      background: #f8f9fa;
+      border-radius: 6px;
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 0;
+    }
+
+    .usage-example code {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+      .preview-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .code-tabs {
+        flex-wrap: wrap;
+      }
+
+      .preview-modal,
+      .details-modal {
+        padding: 1rem;
+      }
+    }
   `]
 })
 export class ComponentGeneratorComponent implements OnInit {
   designSystems: DesignSystem[] = [];
   generatedComponents: GeneratedComponent[] = [];
   currentDesignSystem: DesignSystem | null = null;
+  previewComponent: any = null;
+  selectedComponent: any = null;
   isGenerating = false;
   activeTab = 'html';
+  detailActiveTab = 'html';
 
   constructor(
     private designSystemService: DesignSystemService,
@@ -638,9 +1136,51 @@ export class ComponentGeneratorComponent implements OnInit {
     }
   }
 
+  showComponentPreview(component: any): void {
+    this.previewComponent = component;
+  }
+
+  closePreview(): void {
+    this.previewComponent = null;
+  }
+
   viewComponentDetails(component: any): void {
-    this.showInfo(`Viewing details for ${component.name}`);
-    // In a real implementation, this would show a modal with component details
+    this.selectedComponent = component;
+  }
+
+  closeDetails(): void {
+    this.selectedComponent = null;
+  }
+
+  setDetailActiveTab(tab: string): void {
+    this.detailActiveTab = tab;
+  }
+
+  getComponentPreview(component: any): string {
+    // Generate a preview HTML for the component
+    return `
+      <div class="${component.name.toLowerCase()}-container">
+        <div class="${component.name.toLowerCase()}-content">
+          <div class="component-wrapper">
+            <h3>${component.name}</h3>
+            <p>This is a preview of the ${component.name} component.</p>
+            <div class="preview-actions">
+              <button class="preview-btn primary">Primary Action</button>
+              <button class="preview-btn secondary">Secondary Action</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  copyComponentCode(component: any): void {
+    const code = this.getComponentCode(component, this.detailActiveTab);
+    navigator.clipboard.writeText(code).then(() => {
+      this.showSuccess(`${this.detailActiveTab.toUpperCase()} code copied to clipboard!`);
+    }).catch(() => {
+      this.showError('Failed to copy to clipboard.');
+    });
   }
 
   private showSuccess(message: string): void {
