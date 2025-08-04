@@ -93,7 +93,7 @@ export class ComponentGeneratorService {
     return generatedComponents;
   }
 
-  private async generateSingleComponent(component: DesignComponent): Promise<GeneratedComponent> {
+  async generateSingleComponent(component: DesignComponent): Promise<GeneratedComponent> {
     // Generate HTML template
     const html = this.generateHTMLTemplate(component);
     

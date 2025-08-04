@@ -67,6 +67,51 @@ import * as JSZip from 'jszip';
           </div>
         </div>
 
+        <!-- Current Design System Components -->
+        <div *ngIf="currentDesignSystem" class="current-system-components">
+          <div class="components-header">
+            <h3>{{ currentDesignSystem.name }} - Components ({{ currentDesignSystem.components.length }})</h3>
+            <div class="header-actions">
+              <button mat-raised-button color="primary" (click)="generateComponents(currentDesignSystem)">
+                <mat-icon>code</mat-icon>
+                Generate All Components
+              </button>
+              <button mat-button (click)="currentDesignSystem = null">
+                <mat-icon>close</mat-icon>
+                Close
+              </button>
+            </div>
+          </div>
+          
+          <div class="components-grid">
+            <mat-card *ngFor="let component of currentDesignSystem.components" class="component-card">
+              <mat-card-header>
+                <mat-card-title>{{ component.name }}</mat-card-title>
+                <mat-card-subtitle>{{ component.category }}</mat-card-subtitle>
+              </mat-card-header>
+              
+              <mat-card-content>
+                <div class="component-info">
+                  <p><strong>ID:</strong> {{ component.id }}</p>
+                  <p><strong>Figma Node:</strong> {{ component.figmaNodeId }}</p>
+                  <p><strong>Category:</strong> {{ component.category }}</p>
+                </div>
+              </mat-card-content>
+              
+              <mat-card-actions>
+                <button mat-button color="primary" (click)="generateSingleComponent(component)">
+                  <mat-icon>code</mat-icon>
+                  Generate Component
+                </button>
+                <button mat-button color="accent" (click)="viewComponentDetails(component)">
+                  <mat-icon>visibility</mat-icon>
+                  View Details
+                </button>
+              </mat-card-actions>
+            </mat-card>
+          </div>
+        </div>
+
         <!-- Generated Components -->
         <div *ngIf="generatedComponents.length > 0" class="generated-components">
           <div class="components-header">
@@ -295,6 +340,10 @@ import * as JSZip from 'jszip';
       gap: 0.25rem;
     }
 
+    .current-system-components {
+      margin-top: 3rem;
+    }
+
     .generated-components {
       margin-top: 3rem;
     }
@@ -443,11 +492,17 @@ import * as JSZip from 'jszip';
         justify-content: space-between;
       }
     }
+
+    .component-info p {
+      margin: 0.25rem 0;
+      font-size: 0.9rem;
+    }
   `]
 })
 export class ComponentGeneratorComponent implements OnInit {
   designSystems: DesignSystem[] = [];
   generatedComponents: GeneratedComponent[] = [];
+  currentDesignSystem: DesignSystem | null = null;
   isGenerating = false;
   activeTab = 'html';
 
@@ -488,8 +543,9 @@ export class ComponentGeneratorComponent implements OnInit {
   }
 
   viewComponents(designSystem: DesignSystem): void {
+    // Set the current design system and show its components
+    this.currentDesignSystem = designSystem;
     this.showInfo(`Viewing components for ${designSystem.name}`);
-    // TODO: Navigate to component viewer or show modal
   }
 
   downloadAllComponents(): void {
@@ -570,6 +626,21 @@ export class ComponentGeneratorComponent implements OnInit {
   clearGeneratedComponents(): void {
     this.generatedComponents = [];
     this.showInfo('Generated components cleared.');
+  }
+
+  async generateSingleComponent(component: any): Promise<void> {
+    try {
+      const generatedComponent = await this.componentGeneratorService.generateSingleComponent(component);
+      this.generatedComponents.push(generatedComponent);
+      this.showSuccess(`Generated component: ${component.name}`);
+    } catch (error) {
+      this.showError(`Failed to generate component: ${component.name}`);
+    }
+  }
+
+  viewComponentDetails(component: any): void {
+    this.showInfo(`Viewing details for ${component.name}`);
+    // In a real implementation, this would show a modal with component details
   }
 
   private showSuccess(message: string): void {
