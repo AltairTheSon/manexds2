@@ -47,6 +47,7 @@ import { SyncComponent } from './components/sync/sync.component';
 import { FigmaService } from './services/figma.service';
 import { DesignSystemService } from './services/design-system.service';
 import { CodeGeneratorService } from './services/code-generator.service';
+import { ComponentGeneratorService } from './services/component-generator.service';
 
 @NgModule({
   declarations: [
@@ -106,6 +107,7 @@ import { CodeGeneratorService } from './services/code-generator.service';
     FigmaService,
     DesignSystemService,
     CodeGeneratorService,
+    ComponentGeneratorService,
     { provide: LOCALE_ID, useValue: 'en' }
   ],
   bootstrap: [AppComponent]

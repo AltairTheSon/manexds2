@@ -3,6 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FigmaService } from '../../services/figma.service';
 import { DesignSystemService } from '../../services/design-system.service';
+import { ComponentGeneratorService, GenerationProgress } from '../../services/component-generator.service';
+import * as JSZip from 'jszip';
 
 @Component({
   selector: 'app-figma-connection',
@@ -96,13 +98,51 @@ import { DesignSystemService } from '../../services/design-system.service';
                 <mat-icon>visibility</mat-icon>
                 View Details
               </button>
-              <button mat-button color="accent" (click)="generateComponents(file)">
-                <mat-icon>code</mat-icon>
-                Generate Components
+              <button mat-button 
+                      color="accent" 
+                      (click)="generateComponents(file)"
+                      [disabled]="isGenerating">
+                <mat-icon *ngIf="!isGenerating">code</mat-icon>
+                <mat-spinner *ngIf="isGenerating" diameter="20"></mat-spinner>
+                {{ isGenerating ? 'Generating...' : 'Generate Components' }}
               </button>
             </mat-card-actions>
           </mat-card>
         </div>
+      </div>
+
+      <!-- Generation Progress -->
+      <div *ngIf="generationProgress.status !== 'idle'" class="generation-progress">
+        <mat-card>
+          <mat-card-content>
+            <div class="progress-header">
+              <h4>Component Generation Progress</h4>
+              <p>{{ generationProgress.message }}</p>
+            </div>
+            
+            <div class="progress-bar-container">
+              <mat-progress-bar 
+                [value]="generationProgress.total > 0 ? (generationProgress.current / generationProgress.total) * 100 : 0"
+                [color]="generationProgress.status === 'error' ? 'warn' : 'primary'">
+              </mat-progress-bar>
+              <div class="progress-text">
+                <span>{{ generationProgress.current }} / {{ generationProgress.total }} components</span>
+                <span *ngIf="generationProgress.currentComponent">- {{ generationProgress.currentComponent }}</span>
+              </div>
+            </div>
+
+            <div class="progress-actions" *ngIf="generationProgress.status === 'completed'">
+              <button mat-raised-button color="primary" (click)="downloadGeneratedComponents()">
+                <mat-icon>download</mat-icon>
+                Download Components
+              </button>
+              <button mat-button (click)="resetGenerationProgress()">
+                <mat-icon>refresh</mat-icon>
+                Generate Again
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
       </div>
     </div>
   `,
@@ -271,38 +311,99 @@ import { DesignSystemService } from '../../services/design-system.service';
       padding: 1rem;
     }
 
-    .file-card mat-card-actions button {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
-
-    @media (max-width: 768px) {
-      .form-actions {
-        flex-direction: column;
+          .file-card mat-card-actions button {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
       }
 
-      .files-grid {
-        grid-template-columns: 1fr;
+      .generation-progress {
+        margin-top: 2rem;
       }
 
-      .file-card mat-card-actions {
-        flex-direction: column;
+      .generation-progress mat-card {
+        border-radius: 8px;
       }
-    }
+
+      .progress-header {
+        margin-bottom: 1.5rem;
+      }
+
+      .progress-header h4 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+        font-weight: 600;
+      }
+
+      .progress-header p {
+        margin: 0;
+        color: #666;
+      }
+
+      .progress-bar-container {
+        margin-bottom: 1.5rem;
+      }
+
+      .progress-text {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+        color: #666;
+      }
+
+      .progress-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+      }
+
+      .progress-actions button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      @media (max-width: 768px) {
+        .form-actions {
+          flex-direction: column;
+        }
+
+        .files-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .file-card mat-card-actions {
+          flex-direction: column;
+        }
+
+        .progress-actions {
+          flex-direction: column;
+        }
+      }
   `]
 })
 export class FigmaConnectionComponent implements OnInit {
   connectionForm: FormGroup;
   isTesting = false;
   isExtracting = false;
+  isGenerating = false;
   connectionStatus: any = null;
   extractedFiles: any[] = [];
+  generationProgress: GenerationProgress = {
+    current: 0,
+    total: 0,
+    currentComponent: '',
+    status: 'idle',
+    message: ''
+  };
+  generatedComponents: any[] = [];
 
   constructor(
     private fb: FormBuilder,
     private figmaService: FigmaService,
     private designSystemService: DesignSystemService,
+    private componentGeneratorService: ComponentGeneratorService,
     private snackBar: MatSnackBar
   ) {
     this.connectionForm = this.fb.group({
@@ -313,6 +414,32 @@ export class FigmaConnectionComponent implements OnInit {
 
   ngOnInit(): void {
     console.log('FigmaConnectionComponent initialized');
+    this.loadExistingDesignSystems();
+    this.subscribeToGenerationProgress();
+  }
+
+  private subscribeToGenerationProgress(): void {
+    this.componentGeneratorService.getProgress().subscribe(progress => {
+      this.generationProgress = progress;
+      this.isGenerating = progress.status === 'generating';
+    });
+  }
+
+  private loadExistingDesignSystems(): void {
+    this.designSystemService.getDesignSystems().subscribe(designSystems => {
+      // Convert design systems back to file format for display
+      this.extractedFiles = designSystems.map(ds => ({
+        id: ds.figmaFileId,
+        name: ds.name,
+        lastModified: ds.lastSync,
+        version: '1.0',
+        components: ds.components.reduce((acc, comp) => {
+          acc[comp.id] = comp;
+          return acc;
+        }, {} as any),
+        styles: ds.tokens
+      }));
+    });
   }
 
   async testConnection() {
@@ -385,13 +512,24 @@ export class FigmaConnectionComponent implements OnInit {
           console.log(`Processing file: ${fileId}`);
           const file = await this.figmaService.getFile(fileId, accessToken).toPromise();
           if (file) {
+            // Check if design system already exists
+            if (this.designSystemService.hasDesignSystem(file.id || file.key)) {
+              console.log(`Design system already exists for file: ${file.name}`);
+              // Update existing design system
+              const existingDs = this.designSystemService.getDesignSystemByFileId(file.id || file.key);
+              if (existingDs) {
+                const updatedDs = this.designSystemService.extractDesignSystem(file, accessToken);
+                updatedDs.id = existingDs.id; // Keep the same ID
+                this.designSystemService.updateDesignSystem(existingDs.id, updatedDs);
+              }
+            } else {
+              // Create new design system
+              const designSystem = this.designSystemService.extractDesignSystem(file, accessToken);
+              this.designSystemService.addDesignSystem(designSystem);
+            }
+            
             extractedFiles.push(file);
             successCount++;
-            
-            // Extract design system from the file
-            const designSystem = this.designSystemService.extractDesignSystem(file, accessToken);
-            this.designSystemService.addDesignSystem(designSystem);
-            
             console.log(`Successfully extracted file: ${file.name}`);
           }
         } catch (error: any) {
@@ -400,7 +538,8 @@ export class FigmaConnectionComponent implements OnInit {
         }
       }
 
-      this.extractedFiles = extractedFiles;
+      // Reload all design systems to show updated data
+      this.loadExistingDesignSystems();
 
       if (extractedFiles.length > 0) {
         this.connectionStatus = {
@@ -443,10 +582,68 @@ export class FigmaConnectionComponent implements OnInit {
     // TODO: Implement file details modal or navigation
   }
 
-  generateComponents(file: any) {
+  async generateComponents(file: any) {
     console.log('Generate components clicked for:', file.name);
-    this.showInfo(`Generating components for ${file.name}`);
-    // TODO: Navigate to component generator with file data
+    
+    try {
+      // Get the design system for this file
+      const designSystem = this.designSystemService.getDesignSystemByFileId(file.id || file.key);
+      
+      if (!designSystem) {
+        this.showError('No design system found for this file. Please extract the design system first.');
+        return;
+      }
+
+      if (designSystem.components.length === 0) {
+        this.showError('No components found in this design system.');
+        return;
+      }
+
+      this.showInfo(`Starting component generation for ${file.name}...`);
+      
+      // Generate components
+      this.generatedComponents = await this.componentGeneratorService.generateComponents(designSystem);
+      
+      this.showSuccess(`Successfully generated ${this.generatedComponents.length} components!`);
+      
+    } catch (error: any) {
+      console.error('Component generation failed:', error);
+      this.showError('Failed to generate components. Please try again.');
+    }
+  }
+
+  downloadGeneratedComponents(): void {
+    if (this.generatedComponents.length === 0) {
+      this.showError('No components to download.');
+      return;
+    }
+
+    // Create a zip file with all generated components
+    const zip = new JSZip();
+    
+    this.generatedComponents.forEach(component => {
+      const componentFolder = zip.folder(component.name);
+      if (componentFolder) {
+        componentFolder.file(`${component.name.toLowerCase()}.component.html`, component.html);
+        componentFolder.file(`${component.name.toLowerCase()}.component.scss`, component.scss);
+        componentFolder.file(`${component.name.toLowerCase()}.component.ts`, component.typescript);
+      }
+    });
+
+    zip.generateAsync({ type: 'blob' }).then(content => {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(content);
+      link.download = 'generated-components.zip';
+      link.click();
+      URL.revokeObjectURL(link.href);
+      
+      this.showSuccess('Components downloaded successfully!');
+    });
+  }
+
+  resetGenerationProgress(): void {
+    this.componentGeneratorService.resetProgress();
+    this.generatedComponents = [];
   }
 
   getComponentCount(file: any): number {

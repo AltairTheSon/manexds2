@@ -105,6 +105,17 @@ export class DesignSystemService {
     };
   }
 
+  // Get design system by file ID
+  getDesignSystemByFileId(fileId: string): DesignSystem | null {
+    const current = this.designSystems.value;
+    return current.find(ds => ds.figmaFileId === fileId) || null;
+  }
+
+  // Check if design system exists for file
+  hasDesignSystem(fileId: string): boolean {
+    return this.getDesignSystemByFileId(fileId) !== null;
+  }
+
   // Extract components from Figma nodes
   private extractComponents(figmaFile: any): DesignComponent[] {
     const components: DesignComponent[] = [];
