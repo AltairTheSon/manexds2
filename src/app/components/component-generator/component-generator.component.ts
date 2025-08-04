@@ -766,21 +766,149 @@ export class ComponentGeneratorComponent implements OnInit {
   }
 
   getComponentPreview(component: any): string {
-    // Generate a preview HTML for the component
-    return `
-      <div class="${component.name.toLowerCase()}-container">
-        <div class="${component.name.toLowerCase()}-content">
-          <div class="component-wrapper">
-            <h3>${component.name}</h3>
-            <p>This is a preview of the ${component.name} component.</p>
-            <div class="preview-actions">
-              <button class="preview-btn primary">Primary Action</button>
-              <button class="preview-btn secondary">Secondary Action</button>
+    const componentName = component.name.toLowerCase();
+    const displayName = this.getComponentDisplayName(component.name);
+    
+    // Generate different previews based on component category
+    switch (component.category.toLowerCase()) {
+      case 'button':
+        return `
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+            <button style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-size: 0.875rem; font-weight: 500; cursor: pointer; background: #007bff; color: white; transition: all 0.2s ease;">
+              <span style="font-size: 1rem;">★</span>
+              <span>${displayName}</span>
+            </button>
+            <button style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border: 2px solid #007bff; border-radius: 6px; font-size: 0.875rem; font-weight: 500; cursor: pointer; background: transparent; color: #007bff; transition: all 0.2s ease;">
+              <span>${displayName}</span>
+            </button>
+            <button style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-size: 0.875rem; font-weight: 500; cursor: not-allowed; background: #6c757d; color: white; opacity: 0.6;">
+              <span>${displayName}</span>
+            </button>
+          </div>
+        `;
+
+      case 'card':
+        return `
+          <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); max-width: 300px;">
+            <div style="padding: 1.5rem 1.5rem 0;">
+              <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 600; color: #333;">${displayName}</h3>
+              <p style="margin: 0; color: #666; font-size: 0.875rem;">This is a preview of the ${displayName} card component.</p>
+            </div>
+            <div style="padding: 1.5rem;">
+              <p style="margin: 0; color: #666; line-height: 1.5;">Card content goes here. This component supports various configurations and styling options.</p>
+            </div>
+            <div style="padding: 0 1.5rem 1.5rem; display: flex; gap: 0.75rem; justify-content: flex-end;">
+              <button style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #007bff; color: white; cursor: pointer;">Action</button>
+              <button style="padding: 0.5rem 1rem; border: 1px solid #e9ecef; border-radius: 4px; background: white; color: #666; cursor: pointer;">Cancel</button>
             </div>
           </div>
-        </div>
-      </div>
-    `;
+        `;
+
+      case 'input':
+        return `
+          <div style="width: 100%; max-width: 300px;">
+            <div style="position: relative; margin-bottom: 1rem;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">${displayName}</label>
+              <input type="text" placeholder="Enter ${displayName.toLowerCase()}..." style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 4px; font-size: 0.875rem; outline: none; transition: border-color 0.2s ease;" />
+            </div>
+            <div style="position: relative;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">${displayName} with Icon</label>
+              <div style="position: relative;">
+                <input type="text" placeholder="Enter ${displayName.toLowerCase()}..." style="width: 100%; padding: 0.75rem 2.5rem 0.75rem 0.75rem; border: 1px solid #e9ecef; border-radius: 4px; font-size: 0.875rem; outline: none;" />
+                <span style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: #666;">🔍</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+      case 'icon':
+        return `
+          <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s ease;">
+              <span style="font-size: 1rem; color: #333;">★</span>
+              <span style="font-size: 0.875rem; color: #666; font-weight: 500;">${displayName}</span>
+            </div>
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 1.5rem; color: #333;">★</span>
+            </div>
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 2rem; color: #333;">★</span>
+            </div>
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s ease; padding: 0.5rem; border-radius: 4px; background: #f8f9fa;">
+              <span style="font-size: 1rem; color: #333;">★</span>
+              <span style="font-size: 0.875rem; color: #666; font-weight: 500;">Clickable</span>
+            </div>
+          </div>
+        `;
+
+      case 'navigation':
+        return `
+          <nav style="width: 100%; max-width: 400px;">
+            <ul style="display: flex; list-style: none; margin: 0; padding: 0; gap: 0; border: 1px solid #e9ecef; border-radius: 6px; overflow: hidden;">
+              <li style="margin: 0;">
+                <a style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; color: white; text-decoration: none; background: #007bff; font-weight: 500;">
+                  <span style="font-size: 1rem;">🏠</span>
+                  <span>Home</span>
+                </a>
+              </li>
+              <li style="margin: 0;">
+                <a style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; color: #666; text-decoration: none; transition: all 0.2s ease;">
+                  <span style="font-size: 1rem;">ℹ️</span>
+                  <span>About</span>
+                </a>
+              </li>
+              <li style="margin: 0;">
+                <a style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; color: #666; text-decoration: none; transition: all 0.2s ease;">
+                  <span style="font-size: 1rem;">📞</span>
+                  <span>Contact</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        `;
+
+      case 'form':
+        return `
+          <form style="width: 100%; max-width: 400px; margin: 0 auto;">
+            <div style="margin-bottom: 2rem; text-align: center;">
+              <h3 style="margin: 0 0 0.5rem 0; font-size: 1.5rem; font-weight: 600; color: #333;">${displayName}</h3>
+              <p style="margin: 0; color: #666; font-size: 0.875rem;">This is a preview of the ${displayName} form component.</p>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+              <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Name</label>
+                <input type="text" placeholder="Enter your name" style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 4px; font-size: 0.875rem; outline: none;" />
+              </div>
+              <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email</label>
+                <input type="email" placeholder="Enter your email" style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 4px; font-size: 0.875rem; outline: none;" />
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center; align-items: center;">
+              <button type="submit" style="min-width: 120px; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; background: #007bff; color: white; cursor: pointer; font-weight: 500;">Submit</button>
+              <button type="button" style="min-width: 120px; padding: 0.75rem 1.5rem; border: 1px solid #e9ecef; border-radius: 4px; background: white; color: #666; cursor: pointer;">Cancel</button>
+            </div>
+          </form>
+        `;
+
+      default:
+        return `
+          <div style="display: flex; align-items: center; justify-content: center; padding: 1rem;">
+            <div style="max-width: 100%; width: 100%;">
+              <div style="background: #ffffff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                <h3 style="margin: 0 0 1rem 0; color: #333; font-weight: 600;">${displayName}</h3>
+                <p style="margin: 0 0 1.5rem 0; color: #666; line-height: 1.5;">This is a preview of the ${displayName} component from your design system.</p>
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                  <button style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #007bff; color: white; cursor: pointer;">Action</button>
+                  <button style="padding: 0.5rem 1rem; border: 1px solid #e9ecef; border-radius: 4px; background: white; color: #666; cursor: pointer;">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+    }
   }
 
   copyComponentCode(component: any): void {
