@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { DesignSystemService, DesignSystem, DesignComponent } from '../../services/design-system.service';
 import { ComponentGeneratorService, GeneratedComponent } from '../../services/component-generator.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import * as JSZip from 'jszip';
+import JSZip from 'jszip';
 
 @Component({
   selector: 'app-component-generator',
@@ -380,7 +380,7 @@ import * as JSZip from 'jszip';
                   <div class="properties-list">
                     <div class="property-item">
                       <div class="property-header">
-                        <span class="property-name">@Input() data</span>
+                        <span class="property-name">&#64;Input() data</span>
                         <span class="property-type">any</span>
                       </div>
                       <p class="property-description">Data object to be passed to the component</p>
@@ -388,7 +388,7 @@ import * as JSZip from 'jszip';
                     
                     <div class="property-item">
                       <div class="property-header">
-                        <span class="property-name">@Output() action</span>
+                        <span class="property-name">&#64;Output() action</span>
                         <span class="property-type">EventEmitter&lt;any&gt;</span>
                       </div>
                       <p class="property-description">Event emitter for component actions</p>
@@ -419,7 +419,7 @@ import * as JSZip from 'jszip';
                     <h5>In Module</h5>
                     <pre><code>import {{ '{' }} {{ selectedComponent.name }}Component {{ '}' }} from './{{ selectedComponent.name.toLowerCase() }}.component';
 
-@NgModule({{ '{' }}
+&#64;NgModule({{ '{' }}
   declarations: [{{ selectedComponent.name }}Component],
   exports: [{{ selectedComponent.name }}Component]
 {{ '}' }})
@@ -1206,7 +1206,6 @@ export class {{ selectedComponent.name }}Module {{ '{' }} {{ '}' }}</code></pre>
         grid-template-columns: 1fr;
       }
     }
-    }
   `]
 })
 export class ComponentGeneratorComponent implements OnInit {
@@ -1257,8 +1256,8 @@ export class ComponentGeneratorComponent implements OnInit {
 
     try {
       // Subscribe to progress updates
-      this.componentGeneratorService.progressSubject.subscribe(progress => {
-        this.generationProgress = progress.progress;
+      this.componentGeneratorService.getProgress().subscribe(progress => {
+        this.generationProgress = progress.total > 0 ? (progress.current / progress.total) * 100 : 0;
         this.currentGeneratingComponent = progress.currentComponent;
       });
 
