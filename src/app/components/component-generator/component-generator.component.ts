@@ -95,7 +95,7 @@ import * as JSZip from 'jszip';
         <!-- Current Design System Components -->
         <div *ngIf="currentDesignSystem" class="current-system-components">
           <div class="components-header">
-            <h3>{{ currentDesignSystem.name }} - Components ({{ currentDesignSystem.components.length }})</h3>
+            <h3>{{ currentDesignSystem.name }} - Components ({{ getComponentCount() }} in {{ getGroupCount() }} groups)</h3>
             <div class="header-actions">
               <button mat-raised-button color="primary" (click)="generateComponents(currentDesignSystem)">
                 <mat-icon>code</mat-icon>
@@ -108,59 +108,71 @@ import * as JSZip from 'jszip';
             </div>
           </div>
           
-          <div class="components-grid">
-            <mat-card *ngFor="let component of currentDesignSystem.components" class="component-card">
-              <mat-card-header>
-                <mat-card-title>{{ component.name }}</mat-card-title>
-                <mat-card-subtitle>{{ component.category }}</mat-card-subtitle>
-              </mat-card-header>
-              
-              <mat-card-content>
-                <div class="component-info">
-                  <p><strong>ID:</strong> {{ component.id }}</p>
-                  <p><strong>Figma Node:</strong> {{ component.figmaNodeId }}</p>
-                  <p><strong>Category:</strong> {{ component.category }}</p>
-                </div>
-              </mat-card-content>
-              
-              <mat-card-actions>
-                <button mat-button 
-                        color="primary" 
-                        (click)="generateSingleComponent(component)"
-                        [disabled]="isGeneratingAll || isGeneratingSingle">
-                  <mat-icon *ngIf="!isGeneratingSingle">code</mat-icon>
-                  <mat-spinner *ngIf="isGeneratingSingle" diameter="16"></mat-spinner>
-                  {{ isGeneratingSingle ? 'Generating...' : 'Generate Component' }}
-                </button>
-                <button mat-button 
-                        color="accent" 
-                        (click)="viewComponentDetails(component)"
-                        [disabled]="isGeneratingAll || isGeneratingSingle">
-                  <mat-icon>visibility</mat-icon>
-                  View Details
-                </button>
-                <button mat-button 
-                        color="warn" 
-                        (click)="showComponentPreview(component)"
-                        [disabled]="isGeneratingAll || isGeneratingSingle">
-                  <mat-icon>preview</mat-icon>
-                  Preview
-                </button>
-              </mat-card-actions>
-              
-              <!-- Single Component Generation Progress -->
-              <div *ngIf="isGeneratingSingle && currentGeneratingComponent === component.name" class="single-progress">
-                <mat-progress-bar 
-                  mode="determinate" 
-                  [value]="generationProgress"
-                  color="accent">
-                </mat-progress-bar>
-                <div class="progress-text">
-                  <span>{{ generationProgress }}%</span>
-                  <span>Generating {{ component.name }}</span>
-                </div>
+          <!-- Grouped Components -->
+          <div class="component-groups">
+            <div *ngFor="let groupName of getGroupKeys()" class="component-group">
+              <div class="group-header">
+                <mat-icon class="group-icon">{{ getGroupIcon(groupName) }}</mat-icon>
+                <h4>{{ groupName }}</h4>
+                <span class="group-count">({{ groupedComponents[groupName].length }} components)</span>
               </div>
-            </mat-card>
+              
+              <div class="components-grid">
+                <mat-card *ngFor="let component of groupedComponents[groupName]" class="component-card">
+                  <mat-card-header>
+                    <mat-card-title>{{ getComponentDisplayName(component.name) }}</mat-card-title>
+                    <mat-card-subtitle>{{ component.category }}</mat-card-subtitle>
+                  </mat-card-header>
+                  
+                  <mat-card-content>
+                    <div class="component-info">
+                      <p><strong>ID:</strong> {{ component.id }}</p>
+                      <p><strong>Figma Node:</strong> {{ component.figmaNodeId }}</p>
+                      <p><strong>Category:</strong> {{ component.category }}</p>
+                      <p><strong>Full Name:</strong> {{ component.name }}</p>
+                    </div>
+                  </mat-card-content>
+                  
+                  <mat-card-actions>
+                    <button mat-button 
+                            color="primary" 
+                            (click)="generateSingleComponent(component)"
+                            [disabled]="isGeneratingAll || isGeneratingSingle">
+                      <mat-icon *ngIf="!isGeneratingSingle">code</mat-icon>
+                      <mat-spinner *ngIf="isGeneratingSingle" diameter="16"></mat-spinner>
+                      {{ isGeneratingSingle ? 'Generating...' : 'Generate Component' }}
+                    </button>
+                    <button mat-button 
+                            color="accent" 
+                            (click)="viewComponentDetails(component)"
+                            [disabled]="isGeneratingAll || isGeneratingSingle">
+                      <mat-icon>visibility</mat-icon>
+                      View Details
+                    </button>
+                    <button mat-button 
+                            color="warn" 
+                            (click)="showComponentPreview(component)"
+                            [disabled]="isGeneratingAll || isGeneratingSingle">
+                      <mat-icon>preview</mat-icon>
+                      Preview
+                    </button>
+                  </mat-card-actions>
+                  
+                  <!-- Single Component Generation Progress -->
+                  <div *ngIf="isGeneratingSingle && currentGeneratingComponent === component.name" class="single-progress">
+                    <mat-progress-bar 
+                      mode="determinate" 
+                      [value]="generationProgress"
+                      color="accent">
+                    </mat-progress-bar>
+                    <div class="progress-text">
+                      <span>{{ generationProgress }}%</span>
+                      <span>Generating {{ component.name }}</span>
+                    </div>
+                  </div>
+                </mat-card>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1066,6 +1078,91 @@ export class {{ selectedComponent.name }}Module {{ '{' }} {{ '}' }}</code></pre>
       font-size: 0.85rem;
     }
 
+    /* Component Grouping Styles */
+    .component-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .component-group {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid #e9ecef;
+    }
+
+    .group-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #dee2e6;
+    }
+
+    .group-icon {
+      font-size: 1.5rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      color: #007bff;
+    }
+
+    .group-header h4 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #333;
+      flex-grow: 1;
+    }
+
+    .group-count {
+      font-size: 0.9rem;
+      color: #666;
+      font-weight: 500;
+      background: #e9ecef;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+    }
+
+    .component-group .components-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+
+    .component-group .component-card {
+      background: white;
+      border: 1px solid #e9ecef;
+      transition: all 0.2s ease;
+    }
+
+    .component-group .component-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .component-group .component-card mat-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .component-group .component-card mat-card-subtitle {
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    .component-info p {
+      margin: 0.25rem 0;
+      font-size: 0.85rem;
+    }
+
+    .component-info p strong {
+      color: #333;
+      font-weight: 600;
+    }
+
     @media (max-width: 768px) {
       .preview-container {
         grid-template-columns: 1fr;
@@ -1090,6 +1187,25 @@ export class {{ selectedComponent.name }}Module {{ '{' }} {{ '}' }}</code></pre>
         gap: 0.25rem;
         text-align: center;
       }
+
+      .component-group {
+        padding: 1rem;
+      }
+
+      .group-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .group-header h4 {
+        font-size: 1.1rem;
+      }
+
+      .component-group .components-grid {
+        grid-template-columns: 1fr;
+      }
+    }
     }
   `]
 })
@@ -1097,6 +1213,7 @@ export class ComponentGeneratorComponent implements OnInit {
   designSystems: DesignSystem[] = [];
   generatedComponents: GeneratedComponent[] = [];
   currentDesignSystem: DesignSystem | null = null;
+  groupedComponents: { [key: string]: any[] } = {};
   previewComponent: any = null;
   selectedComponent: any = null;
   isGenerating = false;
@@ -1158,7 +1275,71 @@ export class ComponentGeneratorComponent implements OnInit {
   viewComponents(designSystem: DesignSystem): void {
     // Set the current design system and show its components
     this.currentDesignSystem = designSystem;
+    this.groupComponents(designSystem.components);
     this.showInfo(`Viewing components for ${designSystem.name}`);
+  }
+
+  groupComponents(components: any[]): void {
+    this.groupedComponents = {};
+    
+    components.forEach(component => {
+      const rootCategory = this.getRootCategory(component.name);
+      if (!this.groupedComponents[rootCategory]) {
+        this.groupedComponents[rootCategory] = [];
+      }
+      this.groupedComponents[rootCategory].push(component);
+    });
+  }
+
+  getRootCategory(componentName: string): string {
+    // Split by '/' and get the first part, or use the full name if no '/'
+    const parts = componentName.split('/');
+    return parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
+  }
+
+  getComponentCount(): number {
+    if (!this.currentDesignSystem) return 0;
+    return this.currentDesignSystem.components.length;
+  }
+
+  getGroupCount(): number {
+    return Object.keys(this.groupedComponents).length;
+  }
+
+  getGroupKeys(): string[] {
+    return Object.keys(this.groupedComponents).sort();
+  }
+
+  getComponentDisplayName(fullName: string): string {
+    const parts = fullName.split('/');
+    return parts.length > 1 ? parts.slice(1).join('/') : fullName;
+  }
+
+  getGroupIcon(groupName: string): string {
+    const iconMap: { [key: string]: string } = {
+      'Icons': 'star',
+      'Buttons': 'smart_button',
+      'Cards': 'credit_card',
+      'Forms': 'input',
+      'Navigation': 'navigation',
+      'Layout': 'view_quilt',
+      'Typography': 'text_fields',
+      'Colors': 'palette',
+      'Spacing': 'space_bar',
+      'Components': 'extension',
+      'Elements': 'widgets',
+      'Widgets': 'dashboard',
+      'Modules': 'apps',
+      'Sections': 'view_column',
+      'Pages': 'pages',
+      'Templates': 'template',
+      'Blocks': 'view_module',
+      'Atoms': 'radio_button_unchecked',
+      'Molecules': 'scatter_plot',
+      'Organisms': 'account_tree'
+    };
+    
+    return iconMap[groupName] || 'extension';
   }
 
   downloadAllComponents(): void {
