@@ -512,11 +512,18 @@ export class FigmaConnectionComponent implements OnInit {
           console.log(`Processing file: ${fileId}`);
           const file = await this.figmaService.getFile(fileId, accessToken).toPromise();
           if (file) {
+            // Get file ID safely
+            const fileId = file.id || file.key;
+            if (!fileId) {
+              console.error(`No file ID found for file: ${file.name}`);
+              continue;
+            }
+
             // Check if design system already exists
-            if (this.designSystemService.hasDesignSystem(file.id || file.key)) {
+            if (this.designSystemService.hasDesignSystem(fileId)) {
               console.log(`Design system already exists for file: ${file.name}`);
               // Update existing design system
-              const existingDs = this.designSystemService.getDesignSystemByFileId(file.id || file.key);
+              const existingDs = this.designSystemService.getDesignSystemByFileId(fileId);
               if (existingDs) {
                 const updatedDs = this.designSystemService.extractDesignSystem(file, accessToken);
                 updatedDs.id = existingDs.id; // Keep the same ID
@@ -586,8 +593,15 @@ export class FigmaConnectionComponent implements OnInit {
     console.log('Generate components clicked for:', file.name);
     
     try {
+      // Get file ID safely
+      const fileId = file.id || file.key;
+      if (!fileId) {
+        this.showError('No file ID found for this file.');
+        return;
+      }
+
       // Get the design system for this file
-      const designSystem = this.designSystemService.getDesignSystemByFileId(file.id || file.key);
+      const designSystem = this.designSystemService.getDesignSystemByFileId(fileId);
       
       if (!designSystem) {
         this.showError('No design system found for this file. Please extract the design system first.');
