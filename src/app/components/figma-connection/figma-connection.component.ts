@@ -519,33 +519,27 @@ export class FigmaConnectionComponent implements OnInit {
             if (file) {
               console.log(`File data received:`, {
                 name: file.name,
-                id: file.id,
-                key: file.key,
                 components: file.components ? Object.keys(file.components).length : 0,
                 styles: file.styles ? Object.keys(file.styles).length : 0
               });
 
-              // Get file ID safely
-              const fileIdFromResponse = file.id || file.key;
-              if (!fileIdFromResponse) {
-                console.error(`No file ID found for file: ${file.name}`);
-                continue;
-              }
+              // Use the file ID that was passed to the API call
+              const fileIdFromRequest = fileId;
 
               // Check if design system already exists
-              if (this.designSystemService.hasDesignSystem(fileIdFromResponse)) {
+              if (this.designSystemService.hasDesignSystem(fileIdFromRequest)) {
                 console.log(`Design system already exists for file: ${file.name}`);
                 // Update existing design system
-                const existingDs = this.designSystemService.getDesignSystemByFileId(fileIdFromResponse);
+                const existingDs = this.designSystemService.getDesignSystemByFileId(fileIdFromRequest);
                 if (existingDs) {
-                  const updatedDs = this.designSystemService.extractDesignSystem(file, accessToken);
+                  const updatedDs = this.designSystemService.extractDesignSystem(file, accessToken, fileIdFromRequest);
                   updatedDs.id = existingDs.id; // Keep the same ID
                   this.designSystemService.updateDesignSystem(existingDs.id, updatedDs);
                 }
               } else {
                 // Create new design system
                 console.log(`Creating new design system for file: ${file.name}`);
-                const designSystem = this.designSystemService.extractDesignSystem(file, accessToken);
+                const designSystem = this.designSystemService.extractDesignSystem(file, accessToken, fileIdFromRequest);
                 this.designSystemService.addDesignSystem(designSystem);
                 console.log(`Design system created with ID: ${designSystem.id}`);
               }

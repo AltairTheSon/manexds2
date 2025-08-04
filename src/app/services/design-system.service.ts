@@ -89,14 +89,14 @@ export class DesignSystemService {
   }
 
   // Extract design system from Figma file
-  extractDesignSystem(figmaFile: any, accessToken: string): DesignSystem {
+  extractDesignSystem(figmaFile: any, accessToken: string, fileId?: string): DesignSystem {
     const components = this.extractComponents(figmaFile);
     const tokens = this.extractDesignTokens(figmaFile);
     
     return {
       id: this.generateId(),
       name: figmaFile.name,
-      figmaFileId: figmaFile.id || figmaFile.key,
+      figmaFileId: fileId || figmaFile.id || figmaFile.key || 'unknown',
       figmaAccessToken: accessToken,
       lastSync: new Date(),
       components,
