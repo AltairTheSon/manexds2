@@ -11,7 +11,9 @@ import { Component, OnInit } from '@angular/core';
 
       <div class="dashboard-grid">
         <div class="dashboard-card">
-          <div class="card-icon">🎨</div>
+          <div class="card-icon">
+            <mat-icon class="gradient-icon palette">palette</mat-icon>
+          </div>
           <h3>Figma Connection</h3>
           <p>Connect to your Figma files and extract design systems</p>
           <button mat-raised-button color="primary" routerLink="/figma-connection">
@@ -20,7 +22,9 @@ import { Component, OnInit } from '@angular/core';
         </div>
 
         <div class="dashboard-card">
-          <div class="card-icon">🧩</div>
+          <div class="card-icon">
+            <mat-icon class="gradient-icon puzzle">extension</mat-icon>
+          </div>
           <h3>Component Generator</h3>
           <p>Generate Angular components from your design system</p>
           <button mat-raised-button color="accent" routerLink="/component-generator">
@@ -29,7 +33,9 @@ import { Component, OnInit } from '@angular/core';
         </div>
 
         <div class="dashboard-card">
-          <div class="card-icon">🎯</div>
+          <div class="card-icon">
+            <mat-icon class="gradient-icon target">gps_fixed</mat-icon>
+          </div>
           <h3>Design Tokens</h3>
           <p>Manage colors, typography, spacing, and other design tokens</p>
           <button mat-raised-button color="warn" routerLink="/design-tokens">
@@ -38,7 +44,9 @@ import { Component, OnInit } from '@angular/core';
         </div>
 
         <div class="dashboard-card">
-          <div class="card-icon">📊</div>
+          <div class="card-icon">
+            <mat-icon class="gradient-icon analytics">analytics</mat-icon>
+          </div>
           <h3>Statistics</h3>
           <p>View analytics and usage statistics for your design system</p>
           <button mat-raised-button routerLink="/stats">
@@ -47,7 +55,9 @@ import { Component, OnInit } from '@angular/core';
         </div>
 
         <div class="dashboard-card">
-          <div class="card-icon">🔄</div>
+          <div class="card-icon">
+            <mat-icon class="gradient-icon sync">sync</mat-icon>
+          </div>
           <h3>Sync</h3>
           <p>Keep your components in sync with Figma changes</p>
           <button mat-raised-button routerLink="/sync">
@@ -56,7 +66,9 @@ import { Component, OnInit } from '@angular/core';
         </div>
 
         <div class="dashboard-card">
-          <div class="card-icon">⚙️</div>
+          <div class="card-icon">
+            <mat-icon class="gradient-icon settings">settings</mat-icon>
+          </div>
           <h3>Settings</h3>
           <p>Configure your design system preferences and options</p>
           <button mat-raised-button>
@@ -134,8 +146,59 @@ import { Component, OnInit } from '@angular/core';
     }
 
     .card-icon {
-      font-size: 3rem;
       margin-bottom: 1rem;
+    }
+
+    .gradient-icon {
+      font-size: 3rem;
+      width: 3rem;
+      height: 3rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gradient-icon.palette {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gradient-icon.puzzle {
+      background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gradient-icon.target {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gradient-icon.analytics {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gradient-icon.sync {
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gradient-icon.settings {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .dashboard-card h3 {
@@ -182,7 +245,10 @@ import { Component, OnInit } from '@angular/core';
     .stat-number {
       font-size: 2.5rem;
       font-weight: 700;
-      color: #3f51b5;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       margin-bottom: 0.5rem;
     }
 
