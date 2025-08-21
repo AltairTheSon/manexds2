@@ -49,4 +49,17 @@ git show cursor/create-angular-design-system-from-figma-60f7:src/app/services/co
 git show cursor/create-angular-design-system-from-figma-60f7:src/app/interfaces/figma.interface.ts > src/app/interfaces/figma.interface.ts
 
 echo "✅ Files copied successfully!"
-echo "📝 Now run: git add . && git commit -m 'Merge Figma Design System Generator to main' && git push origin main"
+
+# Add all changes to git
+echo "📦 Adding files to git..."
+git add .
+
+# Commit the changes
+echo "💾 Committing changes..."
+git commit -m "Merge Figma Design System Generator to main"
+
+# Push to the current branch (not main, since we might be on a different branch)
+echo "🚀 Pushing changes..."
+git push origin HEAD
+
+echo "✅ Successfully merged, committed, and pushed changes!"
